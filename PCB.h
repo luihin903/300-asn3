@@ -1,10 +1,8 @@
-int counter = 0;
-
 typedef struct Process_Control_Block PCB;
 struct Process_Control_Block {
-    int id = counter ++;
+    int id;
     int priority;
-    State state = READY;
+    enum State state;
 };
 
 enum State {
