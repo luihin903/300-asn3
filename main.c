@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include "list.h"
+#include "PCB.h"
+#include "Commands.h"
 
 int main() {
 
-    List* readyQueue;
-    readyQueue = List_create();
+    List* readyQueues[3];
+
+    for (int i = 0; i < 3; i ++) {
+        readyQueues[i] = List_create();
+    }
 
     char command;
 
@@ -16,9 +21,14 @@ int main() {
         switch (command) {
             case 'C':
                 printf("%s\n", "got C");
+                int priority;
+                printf("%d\n", priority == 0);
+                printf("Priority(0, 1, 2): \n");
+                scanf("%d", &priority);
+                Create(priority, readyQueues);
                 break;
             default:
-                printf("%s\n", "Invalid Command");
+                printf("%s \"%c\"\n", "Invalid Command", command);
         }
     }
 
