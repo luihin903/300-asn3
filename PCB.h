@@ -1,3 +1,12 @@
+#ifndef PCB_H
+#define PCB_H
+
+enum State {
+    RUNNING,
+    READY,
+    BLOCKED
+};
+
 typedef struct Process_Control_Block PCB;
 struct Process_Control_Block {
     int id;
@@ -5,9 +14,4 @@ struct Process_Control_Block {
     enum State state;
 };
 
-enum State {
-    RUNNING,
-    READY,
-    BLOCKED
-};
-https://prod.liveshare.vsengsaas.visualstudio.com/join?C27AEFA88E70449051D9329C7D63291CCD22
+#endif

@@ -20,11 +20,11 @@ int main() {
 
         switch (command) {
             case 'C':
-                printf("%s\n", "got C");
-                int priority;
-                printf("%d\n", priority == 0);
-                printf("Priority(0, 1, 2): \n");
-                scanf("%d", &priority);
+                int priority = -1;
+                while (priority != 0 || priority != 1 || priority != 2) {
+                    printf("Priority(0, 1, 2): \n");
+                    scanf("%d", &priority);
+                }
                 Create(priority, readyQueues);
                 break;
             default:

@@ -1,3 +1,6 @@
+#ifndef COMMANDS_H
+#define COMMANDS_H
+
 #include "list.h"
 #include "PCB.h"
 
@@ -10,3 +13,5 @@ void Create(int priority, List* readyQueues[]) {
     process.state = READY;
     printf("Process (id: %d) created with priority = %d", process.id, process.priority);
 }
+
+#endif
