@@ -10,6 +10,7 @@
 List* readyQueues[3];
 char command;
 PCB* init;
+PCB* running;
 
 int main() {
 
@@ -23,10 +24,40 @@ int main() {
     init->id = 0;
     init->state = READY;
 
-    pthread_create(&input, NULL, inputFunction, NULL);
-    pthread_create(&os, NULL, osFunction, NULL);
+    running = init;
+    running->state = RUNNING;
 
-    while (true);
+
+    while (true) {
+
+        printf("Simulation$ ");
+        scanf(" %c", &command);
+
+        switch (command) {
+            case 'C':
+                int priority = -1;
+                while (priority != 0 && priority != 1 && priority != 2) {
+                    printf("Priority(0, 1, 2): ");
+                    scanf("%d", &priority);
+                }
+                Create(priority);
+                break;
+            case 'F':
+                Fork();
+                break;
+            case 'I':
+                int pid;
+                printf("pid: ");
+                scanf("%d", &pid);
+                Procinfo(pid);
+                break;
+            case 'T':
+                Totalinfo();
+                break;
+            default:
+                printf("%s \"%c\"\n", "Invalid Command", command);
+        }
+    }
 
     return 0;
 }

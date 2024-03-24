@@ -7,6 +7,7 @@
 extern List* readyQueues[3];
 extern char command;
 extern PCB* init;
+extern PCB* running;
 
 int counter = 0;
 
@@ -20,8 +21,18 @@ void Create(int priority) {
         counter --;
     }
     else {
+        if (running->id == 0) running = process;
         printf("Process (id: %d) created with priority = %d.\n", process->id, process->priority);
     }    
+}
+
+void Fork() {
+    if (running->id == 0) {
+        printf("Failed to fork process \"init\"\n");
+    }
+    else {
+        Create(running->priority);
+    }
 }
 
 void Procinfo(int pid) {
