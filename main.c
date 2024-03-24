@@ -1,36 +1,32 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <pthread.h>
 #include "list.h"
 #include "PCB.h"
 #include "Commands.h"
+#include "threads.h"
+
+List* readyQueues[3];
+char command;
+PCB* init;
 
 int main() {
 
-    List* readyQueues[3];
+    pthread_t input, os;
 
     for (int i = 0; i < 3; i ++) {
         readyQueues[i] = List_create();
     }
 
-    char command;
+    init = (PCB*)malloc(sizeof(PCB));
+    init->id = 0;
+    init->state = READY;
 
-    while (true) {
+    pthread_create(&input, NULL, inputFunction, NULL);
+    pthread_create(&os, NULL, osFunction, NULL);
 
-        printf("Simulation$ ");
-        scanf(" %c", &command);
-
-        switch (command) {
-            case 'C':
-                int priority = -1;
-                while (priority != 0 || priority != 1 || priority != 2) {
-                    printf("Priority(0, 1, 2): \n");
-                    scanf("%d", &priority);
-                }
-                Create(priority, readyQueues);
-                break;
-            default:
-                printf("%s \"%c\"\n", "Invalid Command", command);
-        }
-    }
+    while (true);
 
     return 0;
 }

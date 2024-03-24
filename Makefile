@@ -1,6 +1,6 @@
 main:
 	gcc -c main.c
-	gcc -o run main.o list.o
+	gcc -o run -pthread main.o list.o
 
 clean:
 	rm run

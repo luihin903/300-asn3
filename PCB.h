@@ -14,4 +14,12 @@ struct Process_Control_Block {
     enum State state;
 };
 
+void PCB_run(PCB process) {
+    
+}
+
+bool PCB_comparator(void* process, void* pid) {
+    return ((PCB*) process)->id == (uintptr_t) pid;
+}
+
 #endif
