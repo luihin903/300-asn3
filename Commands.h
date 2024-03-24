@@ -8,10 +8,28 @@ extern List* readyQueues[3];
 extern char command;
 extern PCB* init;
 extern PCB* running;
+extern int cpuClock;
 
 int counter = 0;
 
+void Create(int priority);
+void Fork();
+void Kill(int pid);
+void Exit();
+void Quantum();
+void Send(int pid, char* msg);
+void Receive();
+void Reply(int pid, char* msg);
+void NewSemaphore(int sid, int value);
+void SemaphoreP(int sid);
+void SemaphoreV(int sid);
+
 void Create(int priority) {
+    if (priority != 0 && priority != 1 && priority != 2) {
+        printf("Invalid priority.\n");
+        return;
+    }
+
     PCB* process = (PCB*)malloc(sizeof(PCB));
     process->id = ++ counter;
     process->priority = priority;
@@ -21,13 +39,16 @@ void Create(int priority) {
         counter --;
     }
     else {
-        if (running->id == 0) running = process;
-        printf("Process (id: %d) created with priority = %d.\n", process->id, process->priority);
-    }    
+        printf("Process (id: %d) created successfully with priority = %d.\n", process->id, process->priority);
+    }
+
+    if (running == init) {
+        Quantum();
+    }
 }
 
 void Fork() {
-    if (running->id == 0) {
+    if (running == init) {
         printf("Failed to fork process \"init\"\n");
     }
     else {
@@ -35,31 +56,125 @@ void Fork() {
     }
 }
 
-void Procinfo(int pid) {
-    PCB* process = NULL;
-    intptr_t ptr = pid;
+void Kill(int pid) {
 
-    if (process == NULL) {
-        List_first(readyQueues[0]);
-        process = List_search(readyQueues[0], PCB_comparator, (void*) ptr);
+    if (pid == init->id) {
+        if (running == init) {
+            printf("Process \"init\" killed successfully. Simulation ended.\n");
+            exit(0);
+        }
+        else {
+            printf("Unable to kill process \"init\".\n");
+            return;
+        }
     }
-    if (process == NULL) {
-        List_first(readyQueues[1]);
-        process = List_search(readyQueues[1], PCB_comparator, (void*) ptr);
-    }
-    if (process == NULL) {
-        List_first(readyQueues[2]);
-        process = List_search(readyQueues[2], PCB_comparator, (void*) ptr);
-    }
+
+    PCB* process = PCB_find(pid);
+
     if (process == NULL) {
         printf("Process pid = %d Does Not Exist.\n", pid);
-        return;
+    }
+    else {
+        if (process == running) {
+            running = init;
+            running->state = RUNNING;
+        }
+        else {
+            process = List_remove(readyQueues[process->priority]);
+        }
+        printf("Process pid = %d killed successfully\n", process->id);
+        Quantum();
+    }
+}
+
+void Exit() {
+
+}
+
+void Quantum() {
+    cpuClock ++;
+
+    if (running->id != 0)
+        List_append(readyQueues[running->priority], running);
+
+    if (running->state == RUNNING)
+        running->state = READY;
+
+    switch (cpuClock % 6) {
+        case 0:
+            running = List_first(readyQueues[0]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[0]);
+                break;
+            }
+        case 1:
+            running = List_first(readyQueues[1]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[1]);
+                break;
+            }
+        case 2:
+            running = List_first(readyQueues[0]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[0]);
+                break;
+            }
+        case 3:
+            running = List_first(readyQueues[1]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[1]);
+                break;
+            }
+        case 4:
+            running = List_first(readyQueues[0]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[0]);
+                break;
+            }
+        case 5:
+            running = List_first(readyQueues[2]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[2]);
+                break;
+            }
+        // fall from case 5
+        case 6:
+            running = List_first(readyQueues[0]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[0]);
+                break;
+            }
+        case 7:
+            running = List_first(readyQueues[1]);
+            if (running != NULL) {
+                running = List_remove(readyQueues[1]);
+                break;
+            }
     }
 
-    printf("Priority: %d\n", process->priority);
+    if (running == NULL) {
+        running = init;
+    }
+
+    running->state = RUNNING;
+    printf("Process pid = %d is now running.\n", running->id);
+}
+
+void Procinfo(int pid) {
+    PCB* process = PCB_find(pid);
+
+    if (process == NULL) {
+        printf("Process pid = %d Does Not Exist.\n", pid);
+    }
+    else {
+        printf("Priority: %d\n", process->priority);
+        printf("State: %s\n", State_toString(process->state));
+    }    
 }
 
 void Totalinfo() {
+    printf("Process \"init\": { pid : %d }\n", init->id);
+
     for (int i = 0; i < 3; i ++) {
         List_first(readyQueues[i]);
         List_prev(readyQueues[i]);
@@ -71,7 +186,7 @@ void Totalinfo() {
         }
 
         if (List_count(readyQueues[i]) != 0) printf("\b\b");
-        printf("]\n");
+        printf("] (%d)\n", List_count(readyQueues[i]));
     }
 }
 

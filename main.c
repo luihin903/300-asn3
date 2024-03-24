@@ -11,10 +11,13 @@ List* readyQueues[3];
 char command;
 PCB* init;
 PCB* running;
+int cpuClock = 0;
 
 int main() {
 
     pthread_t input, os;
+    int pid;
+    int priority;
 
     for (int i = 0; i < 3; i ++) {
         readyQueues[i] = List_create();
@@ -22,11 +25,13 @@ int main() {
 
     init = (PCB*)malloc(sizeof(PCB));
     init->id = 0;
+    init->priority = -1;
     init->state = READY;
 
     running = init;
     running->state = RUNNING;
 
+    printf("(Process \"init\": { pid : %d })\n", init->id);
 
     while (true) {
 
@@ -35,18 +40,25 @@ int main() {
 
         switch (command) {
             case 'C':
-                int priority = -1;
-                while (priority != 0 && priority != 1 && priority != 2) {
-                    printf("Priority(0, 1, 2): ");
-                    scanf("%d", &priority);
-                }
+                printf("Priority(0, 1, 2): ");
+                scanf("%d", &priority);
                 Create(priority);
                 break;
             case 'F':
                 Fork();
                 break;
+            case 'K':
+                printf("pid: ");
+                scanf("%d", &pid);
+                Kill(pid);
+                break;
+            case 'E':
+                Exit();
+                break;
+            case 'Q':
+                Quantum();
+                break;
             case 'I':
-                int pid;
                 printf("pid: ");
                 scanf("%d", &pid);
                 Procinfo(pid);
