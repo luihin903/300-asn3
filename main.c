@@ -8,6 +8,8 @@
 #include "threads.h"
 
 List* readyQueues[3];
+List* sendingQueue;
+List* receivingQueue;
 char command;
 PCB* init;
 PCB* running;
@@ -18,10 +20,13 @@ int main() {
     pthread_t input, os;
     int pid;
     int priority;
+    char* msg = (char*)malloc(40 * sizeof(char));
 
     for (int i = 0; i < 3; i ++) {
         readyQueues[i] = List_create();
     }
+    sendingQueue = (List*)malloc(sizeof(List));
+    receivingQueue = (List*)malloc(sizeof(List));
 
     init = (PCB*)malloc(sizeof(PCB));
     init->id = 0;
@@ -57,6 +62,13 @@ int main() {
                 break;
             case 'Q':
                 Quantum();
+                break;
+            case 'S':
+                printf("target pid: ");
+                scanf("%d", &pid);
+                printf("message: ");
+                scanf("%s", msg);
+                Send(pid, msg);
                 break;
             case 'I':
                 printf("pid: ");

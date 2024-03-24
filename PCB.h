@@ -3,10 +3,20 @@
 
 #include "list.h"
 
+typedef struct Process_Message Message;
+// struct Process_Message;
+typedef struct Process_Control_Block PCB;
+// struct Process_Control_Block;
+
 enum State {
     RUNNING,
     READY,
     BLOCKED
+};
+
+struct Process_Message {
+    char* content;
+    PCB* sender;
 };
 
 typedef struct Process_Control_Block PCB;
@@ -14,6 +24,7 @@ struct Process_Control_Block {
     int id;
     int priority;
     enum State state;
+    Message* msg;
 };
 
 extern List* readyQueues[3];

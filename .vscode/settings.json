@@ -3,6 +3,8 @@
         "list.h": "c",
         "threads.h": "c",
         "commands.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "pcb.h": "c",
+        "pthread.h": "c"
     }
 }
