@@ -269,16 +269,54 @@ void NewSemaphore(int sid, int value) {
     sem = (Semaphore*)malloc(sizeof(Semaphore));
     sem->id = sid;
     sem->value = value;
+    sem->plist = (List*)malloc(sizeof(List));
     semaphores[sid] = sem;
     printf("{ sid : %d, value : %d } created successfully.\n", sem->id, sem->value);
 }
 
 void SemaphoreP(int sid) {
+    Semaphore* sem = semaphores[sid];
+    if (sem == NULL) {
+        printf("error: { sid : %d } Does Not Exist.\n", sid);
+        return;
+    }
+    if (running == init) {
+        printf("error: Unable to block \"init\".\n");
+        return;
+    }
 
+    sem->value --;
+    printf("P({ sid : %d, value : %d->%d }) success.\n", sem->id, sem->value + 1, sem->value);
+    if (sem->value < 0) {
+        List_append(sem->plist, running);
+        running->state = BLOCKED;
+        running->source = SEMAPHORE;
+        printf("{ pid = %d } blocked.\n", running->id);
+        running = init;
+        init->state = RUNNING;
+        Quantum();
+    }
+    semaphores[sid] = sem;
 }
 
 void SemaphoreV(int sid) {
+    Semaphore* sem = semaphores[sid];
+    if (sem == NULL) {
+        printf("error: { sid : %d } Does Not Exist.\n", sid);
+        return;
+    }
 
+    sem->value ++;
+    printf("P({ sid : %d, value : %d->%d }) success.\n", sem->id, sem->value - 1, sem->value);
+    if (sem->value <= 0) {
+        List_first(sem->plist);
+        PCB* process = List_remove(sem->plist);
+        process->state = READY;
+        process->source = NONE;
+        List_append(readyQueues[process->priority], process);
+        printf("{ pid = %d } unblocked.\n", process->id);
+    }
+    semaphores[sid] = sem;
 }
 
 void Procinfo(int pid) {
@@ -297,6 +335,8 @@ void Procinfo(int pid) {
 }
 
 void Totalinfo() {
+
+    printf("--------------------\n");
             
     void displayQueue(List* queue, char* name) {
         List_first(queue);
@@ -327,7 +367,12 @@ void Totalinfo() {
         }
     }
     printf("\b\b]\n");
-    
+    if (semaphores[0] != NULL) displayQueue(semaphores[0]->plist, "plist (sid = 0)");
+    if (semaphores[1] != NULL) displayQueue(semaphores[1]->plist, "plist (sid = 1)");
+    if (semaphores[2] != NULL) displayQueue(semaphores[2]->plist, "plist (sid = 2)");
+    if (semaphores[3] != NULL) displayQueue(semaphores[3]->plist, "plist (sid = 3)");
+    if (semaphores[4] != NULL) displayQueue(semaphores[4]->plist, "plist (sid = 4)");
+    printf("--------------------\n\n");
 }
 
 #endif

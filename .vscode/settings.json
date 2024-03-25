@@ -5,6 +5,7 @@
         "commands.h": "c",
         "stdio.h": "c",
         "pcb.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "type_traits": "c"
     }
 }

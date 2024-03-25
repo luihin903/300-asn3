@@ -12,6 +12,7 @@ typedef struct Semaphore Semaphore;
 extern List* readyQueues[3];
 extern List* sendingQueue;
 extern List* receivingQueue;
+extern Semaphore* semaphores[5];
 extern PCB* running;
 extern PCB* init;
 
@@ -24,6 +25,7 @@ enum Process_State {
 enum Blocking_Source {
     SENDING,
     RECEIVING,
+    SEMAPHORE,
     NONE
 };
 
@@ -43,6 +45,7 @@ struct Process_Control_Block {
 struct Semaphore {
     int id;
     int value;
+    List* plist;
 };
 
 char* State_toString(State state) {
@@ -85,6 +88,12 @@ PCB* PCB_find(int pid) {
     if (process == NULL) {
         List_first(receivingQueue);
         process = List_search(receivingQueue, PCB_comparator, (void*) ptr);
+    }
+    for (int i = 0; i < 5; i ++) {
+        if (process == NULL) {
+            List_first(semaphores[i]->plist);
+            process = List_search(semaphores[i]->plist, PCB_comparator, (void*) ptr);
+        }
     }
 
     return process;
