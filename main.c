@@ -10,6 +10,7 @@
 List* readyQueues[3];
 List* sendingQueue;
 List* receivingQueue;
+Semaphore* semaphores[5];
 char command;
 PCB* init;
 PCB* running;
@@ -18,8 +19,7 @@ int cpuClock = 0;
 int main() {
 
     pthread_t input, os;
-    int pid;
-    int priority;
+    int arg, arg2;
     char* msg = (char*)malloc(40 * sizeof(char));
 
     for (int i = 0; i < 3; i ++) {
@@ -46,16 +46,16 @@ int main() {
         switch (command) {
             case 'C':
                 printf("Priority(0, 1, 2): ");
-                scanf("%d", &priority);
-                Create(priority);
+                scanf("%d", &arg);
+                Create(arg);
                 break;
             case 'F':
                 Fork();
                 break;
             case 'K':
                 printf("pid: ");
-                scanf("%d", &pid);
-                Kill(pid);
+                scanf("%d", &arg);
+                Kill(arg);
                 break;
             case 'E':
                 Exit();
@@ -65,31 +65,48 @@ int main() {
                 break;
             case 'S':
                 printf("target pid: ");
-                scanf("%d", &pid);
+                scanf("%d", &arg);
                 printf("message: ");
                 scanf("%s", msg);
-                Send(pid, msg);
+                Send(arg, msg);
                 break;
             case 'R':
                 Receive();
                 break;
             case 'Y':
                 printf("target pid: ");
-                scanf("%d", &pid);
+                scanf("%d", &arg);
                 printf("message: ");
                 scanf("%s", msg);
-                Reply(pid, msg);
+                Reply(arg, msg);
+                break;
+            case 'N':
+                printf("sid(0~4): ");
+                scanf("%d", &arg);
+                printf("initial value(>= 0): ");
+                scanf("%d", &arg2);
+                NewSemaphore(arg, arg2);
+                break;
+            case 'P':
+                printf("sid: ");
+                scanf("%d", &arg);
+                SemaphoreP(arg);
+                break;
+            case 'V':
+                printf("sid: ");
+                scanf("%d", &arg);
+                SemaphoreV(arg);
                 break;
             case 'I':
                 printf("pid: ");
-                scanf("%d", &pid);
-                Procinfo(pid);
+                scanf("%d", &arg);
+                Procinfo(arg);
                 break;
             case 'T':
                 Totalinfo();
                 break;
             default:
-                printf("%s \"%c\"\n", "Invalid Command", command);
+                printf("Invalid Command \"%c\"\n", command);
         }
     }
 

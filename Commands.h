@@ -8,6 +8,7 @@
 extern List* readyQueues[3];
 extern List* sendingQueue;
 extern List* receivingQueue;
+extern Semaphore* semaphores[5];
 extern char command;
 extern PCB* init;
 extern PCB* running;
@@ -251,6 +252,35 @@ void Reply(int pid, char* msg) {
     }
 }
 
+void NewSemaphore(int sid, int value) {
+    if (sid < 0 || sid > 4) {
+        printf("error: Invalid sid,\n");
+        return;
+    }
+    if (value < 0) {
+        printf("error: Invalid intial value.\n");
+        return;
+    }
+    Semaphore* sem = semaphores[sid];
+    if (sem != NULL) {
+        printf("error: { sid : %d, value : %d } has been initialized already.\n", sem->id, sem->value);
+        return;
+    }
+    sem = (Semaphore*)malloc(sizeof(Semaphore));
+    sem->id = sid;
+    sem->value = value;
+    semaphores[sid] = sem;
+    printf("{ sid : %d, value : %d } created successfully.\n", sem->id, sem->value);
+}
+
+void SemaphoreP(int sid) {
+
+}
+
+void SemaphoreV(int sid) {
+
+}
+
 void Procinfo(int pid) {
     PCB* process = PCB_find(pid);
 
@@ -287,6 +317,16 @@ void Totalinfo() {
     displayQueue(readyQueues[2], "Ready Queue (Priority = 2)");
     displayQueue(sendingQueue, "Sending Queue");
     displayQueue(receivingQueue, "Receiving Queue");
+    printf("Semaphores: [");
+    for (int i = 0; i < 5; i ++) {
+        if (semaphores[i] == NULL) {
+            printf("NULL, ");
+        }
+        else {
+            printf("{ sid : %d, value : %d }, ", semaphores[i]->id, semaphores[i]->value);
+        }
+    }
+    printf("\b\b]\n");
     
 }
 

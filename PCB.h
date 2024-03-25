@@ -7,6 +7,7 @@ typedef enum Process_State State;
 typedef enum Blocking_Source Source;
 typedef struct Process_Message Message;
 typedef struct Process_Control_Block PCB;
+typedef struct Semaphore Semaphore;
 
 extern List* readyQueues[3];
 extern List* sendingQueue;
@@ -37,6 +38,11 @@ struct Process_Control_Block {
     State state;
     Message* msg;
     Source source;
+};
+
+struct Semaphore {
+    int id;
+    int value;
 };
 
 char* State_toString(State state) {
