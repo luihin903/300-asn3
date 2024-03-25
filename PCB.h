@@ -3,15 +3,27 @@
 
 #include "list.h"
 
+typedef enum Process_State State;
+typedef enum Blocking_Source Source;
 typedef struct Process_Message Message;
-// struct Process_Message;
 typedef struct Process_Control_Block PCB;
-// struct Process_Control_Block;
 
-enum State {
+extern List* readyQueues[3];
+extern List* sendingQueue;
+extern List* receivingQueue;
+extern PCB* running;
+extern PCB* init;
+
+enum Process_State {
     RUNNING,
     READY,
     BLOCKED
+};
+
+enum Blocking_Source {
+    SENDING,
+    RECEIVING,
+    NONE
 };
 
 struct Process_Message {
@@ -19,19 +31,15 @@ struct Process_Message {
     PCB* sender;
 };
 
-typedef struct Process_Control_Block PCB;
 struct Process_Control_Block {
     int id;
     int priority;
-    enum State state;
+    State state;
     Message* msg;
+    Source source;
 };
 
-extern List* readyQueues[3];
-extern PCB* running;
-extern PCB* init;
-
-char* State_toString(enum State state) {
+char* State_toString(State state) {
     switch (state) {
         case RUNNING: return "RUNNING";
         case READY: return "READY";
@@ -43,6 +51,7 @@ bool PCB_comparator(void* process, void* pid) {
     return ((PCB*) process)->id == (uintptr_t) pid;
 }
 
+// sets current to target
 PCB* PCB_find(int pid) {
 
     if (pid == running->id) return running;
@@ -62,6 +71,14 @@ PCB* PCB_find(int pid) {
     if (process == NULL) {
         List_first(readyQueues[2]);
         process = List_search(readyQueues[2], PCB_comparator, (void*) ptr);
+    }
+    if (process == NULL) {
+        List_first(sendingQueue);
+        process = List_search(sendingQueue, PCB_comparator, (void*) ptr);
+    }
+    if (process == NULL) {
+        List_first(receivingQueue);
+        process = List_search(receivingQueue, PCB_comparator, (void*) ptr);
     }
 
     return process;

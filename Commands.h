@@ -29,7 +29,7 @@ void SemaphoreV(int sid);
 
 void Create(int priority) {
     if (priority != 0 && priority != 1 && priority != 2) {
-        printf("Invalid priority.\n");
+        printf("error: Invalid priority.\n");
         return;
     }
 
@@ -38,11 +38,11 @@ void Create(int priority) {
     process->priority = priority;
     process->state = READY;
     if (List_append(readyQueues[process->priority], process)) {
-        printf("Process create failed");
+        printf("error: Process create failed");
         counter --;
     }
     else {
-        printf("Process (id: %d) created successfully with priority = %d.\n", process->id, process->priority);
+        printf("{ pid : %d } created successfully with priority = %d.\n", process->id, process->priority);
     }
 
     if (running == init) {
@@ -52,7 +52,7 @@ void Create(int priority) {
 
 void Fork() {
     if (running == init) {
-        printf("Failed to fork process \"init\"\n");
+        printf("error: Failed to fork process \"init\"\n");
     }
     else {
         Create(running->priority);
@@ -67,7 +67,7 @@ void Kill(int pid) {
             exit(0);
         }
         else {
-            printf("Unable to kill process \"init\".\n");
+            printf("error: Unable to kill process \"init\".\n");
             return;
         }
     }
@@ -75,17 +75,26 @@ void Kill(int pid) {
     PCB* process = PCB_find(pid);
 
     if (process == NULL) {
-        printf("Process pid = %d Does Not Exist.\n", pid);
+        printf("error: { pid : %d } Does Not Exist.\n", pid);
     }
     else {
         if (process == running) {
             running = init;
             running->state = RUNNING;
         }
-        else {
+        else if (process->state == READY) {
             process = List_remove(readyQueues[process->priority]);
         }
-        printf("Process pid = %d killed successfully\n", process->id);
+        else if (process->state == BLOCKED) {
+            if (process->source == SENDING) {
+                process = List_remove(sendingQueue);
+            }
+            else if (process->source == RECEIVING) {
+                process = List_remove(receivingQueue);
+            }
+        }
+
+        printf("{ pid : %d } killed successfully\n", process->id);
         Quantum();
     }
 }
@@ -160,7 +169,7 @@ void Quantum() {
     }
 
     running->state = RUNNING;
-    printf("Process pid = %d is now running.\n", running->id);
+    printf("{ pid : %d } is now running.\n", running->id);
 }
 
 void Send(int pid, char* msg) {
@@ -168,22 +177,77 @@ void Send(int pid, char* msg) {
         printf("error: Message oversized.\n");
         return;
     }
+
     PCB* target = PCB_find(pid);
+    
     if (target == NULL) {
-        printf("error: Process pid = %d Does Not Exist", pid);
+        printf("error: { pid : %d } Does Not Exist", pid);
+    }
+    else if (target->msg != NULL) {
+        printf("error: Unable to send second message to { pid : %d }.\n", target->id);
     }
     else {
         Message* message = (Message*)malloc(sizeof(Message));
         message->content = msg;
         message->sender = running;
+        target->msg = message;
 
         if (message->sender != init) {
             message->sender->state = BLOCKED;
             List_append(sendingQueue, message->sender);
-            printf("Process pid = %d sent the message \"%s\" to process pid = %d.\n", message->sender->id, message->content, target->id);
+            printf("{ pid : %d } sent the message \"%s\" to { pid : %d }.\n", message->sender->id, message->content, target->id);
             running = init;
             Quantum();
         }
+
+        if (target->state == BLOCKED) {
+            if (target->source == RECEIVING) {
+                target->source = NONE;
+                target->state = READY;
+                List_remove(receivingQueue);
+                List_append(readyQueues[target->priority], target);
+            }
+        }
+
+    }
+}
+
+void Receive() {
+    
+    if (running->msg != NULL) {
+        printf("{ pid : %d } received a message from { pid : %d }: \"%s\".\n", running->id, running->msg->sender->id, running->msg->content);
+        free(running->msg);
+        running->msg = NULL;
+    }
+    else {
+        running->state = BLOCKED;
+        running->source = RECEIVING;
+        List_append(receivingQueue, running);
+        printf("{ pid : %d } started to receive message.\n", running->id);
+        running = init;
+        running->state = RUNNING;
+        Quantum();
+    }
+}
+
+void Reply(int pid, char* msg) {
+    if (strlen(msg) > 40) {
+        printf("error: Message oversized.\n");
+        return;
+    }
+
+    PCB* target = PCB_find(pid);
+    
+    if (target == NULL) {
+        printf("error: { pid : %d } Does Not Exist", pid);
+    }
+    else if (target->state != BLOCKED || target->source != SENDING) {
+        printf("error: { pid : %d } is not waiting for reply.\n", target->id);
+    }
+    else {
+        List_remove(sendingQueue);
+        List_append(readyQueues[target->priority], target);
+        printf("{ pid : %d } received reply from { pid : %d }: \"%s\".\n", target->id, running->id, msg);
     }
 }
 
@@ -191,11 +255,14 @@ void Procinfo(int pid) {
     PCB* process = PCB_find(pid);
 
     if (process == NULL) {
-        printf("Process pid = %d Does Not Exist.\n", pid);
+        printf("{ pid : %d } Does Not Exist.\n", pid);
     }
     else {
         printf("Priority: %d\n", process->priority);
         printf("State: %s\n", State_toString(process->state));
+        if (process->msg != NULL) {
+            printf("Holding message: \"%s\"\n", process->msg->content);
+        }
     }    
 }
 
@@ -214,6 +281,7 @@ void Totalinfo() {
     }
 
     printf("Process \"init\": { pid : %d }\n", init->id);
+    printf("Running process: { pid : %d }\n", running->id);
     displayQueue(readyQueues[0], "Ready Queue (Priority = 0)");
     displayQueue(readyQueues[1], "Ready Queue (Priority = 1)");
     displayQueue(readyQueues[2], "Ready Queue (Priority = 2)");

@@ -70,6 +70,16 @@ int main() {
                 scanf("%s", msg);
                 Send(pid, msg);
                 break;
+            case 'R':
+                Receive();
+                break;
+            case 'Y':
+                printf("target pid: ");
+                scanf("%d", &pid);
+                printf("message: ");
+                scanf("%s", msg);
+                Reply(pid, msg);
+                break;
             case 'I':
                 printf("pid: ");
                 scanf("%d", &pid);
